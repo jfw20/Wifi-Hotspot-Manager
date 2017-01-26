@@ -9,14 +9,14 @@ import javax.swing.*;
 
 public class WifiHotspot {
 
+	//Panels/frame
 	private static JFrame _frame;
-	
 	private JPanel _wifiPanel;
 	private JPanel _buttonPanel;
 	private JPanel _mainPanel;
 	private JPanel _wPanel;
 	private JPanel _ePanel;
-	
+	//Text Fields
 	private static JTextField _mode;
 	private static JTextField _ssidName;
 	private static JTextField _maxClients;
@@ -24,7 +24,7 @@ public class WifiHotspot {
 	private static JTextField _cipher;
 	private static JTextField _status;
 	private static JTextField _userKey;
-	
+	//Labels
 	private static JLabel _lmode;
 	private static JLabel _lssid;
 	private static JLabel _lmaxClients;
@@ -32,49 +32,23 @@ public class WifiHotspot {
 	private static JLabel _lciph;
 	private static JLabel _lstat;
 	private static JLabel _lukey;
-
-	
+	//Settings object
 	private static NetSettings settings;
-
+	//Control Buttons
 	private static JButton _start;
 	private static JButton _stop;
 	private JButton _refresh;
-	
+	//Holds settings temporarily
 	private static String[] _networkSettings = new String[5];
-	private static String _name;
-	private static String _password;
 	
 	public static void main(String[] args) throws IOException{
 		
-		boolean _compatible = false;
+		//Var placeholders
 		boolean mode = false;
 		int max = 0;
-		
-		Process p;
-		
-		try{
-			
-			p = Runtime.getRuntime().exec("netsh wlan show drivers");
-			p.waitFor();
-			BufferedReader reader =
-					new BufferedReader(new InputStreamReader(p.getInputStream()));
-			
-			String line = "";
-				
-			while((line = reader.readLine())!= null){
-				if(line.contains("Hosted network supported")){
-					if(line.endsWith("Yes")){
-						_compatible = true;
-					}
-				}
-			}
-			
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		
+		//Gets Settings
 		refresh(false);
-		
+		/*
 		System.out.println(mode);
 		System.out.println(_networkSettings[0]);
 		System.out.println(max);
@@ -82,24 +56,18 @@ public class WifiHotspot {
 		System.out.println(_networkSettings[2]);
 		System.out.println(_networkSettings[3]);
 		System.out.println(_networkSettings[4]);
-		
-		NetSettings settings = new NetSettings(mode,_networkSettings[0],max,
-													_networkSettings[1],_networkSettings[2],
-													_networkSettings[3],_networkSettings[4]);
-
-		
-		
+		*/
+		NetSettings settings = new NetSettings(mode,_networkSettings[0],max,_networkSettings[1],_networkSettings[2],_networkSettings[3],_networkSettings[4]);	
 		new WifiHotspot(settings);
 	}
 	
 	public WifiHotspot(NetSettings settings){
-		
+		//Initialize Listener for buttons
 		CmdListener listener = new CmdListener();
-		
+		//set Panels
 		_mainPanel = new JPanel();
 		_mainPanel.setLayout(new FlowLayout());
 		_mainPanel.setPreferredSize( new Dimension( 325, 360));
-		
 		_wPanel = new JPanel();
 		_ePanel = new JPanel();
 		
@@ -114,6 +82,7 @@ public class WifiHotspot {
 		}else{
 			_mode = new JTextField("Not allowed");
 		}
+		//ugly mess of settings, may fix later
 		_ssidName = new JTextField(settings.getName());
 		_maxClients = new JTextField(settings.getMax());
 		_auth = new JTextField(settings.getAuth());
@@ -174,7 +143,6 @@ public class WifiHotspot {
 		
 		_frame = new JFrame("Wifi HotSpot");
 		
-		//initialize and add login/cast buttons to panels
 		_buttonPanel = new JPanel();
 		_wifiPanel = new JPanel();
 		_wifiPanel.setLayout(new BorderLayout());
@@ -203,16 +171,14 @@ public class WifiHotspot {
 		_wPanel.add(_lciph);
 		_wPanel.add(_lstat);
 		_wPanel.add(_lukey);
-
 		
 		_wifiPanel.add(_wPanel, BorderLayout.WEST);
 		_wifiPanel.add(_ePanel, BorderLayout.EAST);
 
-		
-		//add login/cast panels to mainpanel
 		_mainPanel.add(_buttonPanel);
 		_mainPanel.add(_wifiPanel);
 		
+		//disallows hostednetwork on exit
 		WindowListener exitListener = new WindowAdapter(){
 			
 			@Override
@@ -244,24 +210,29 @@ public class WifiHotspot {
 	
 	public void start(){
 		Process p;
+		//if ssid name is > 32 characters, doesn't start, popup error
 		if(_ssidName.getText().length() > 32){
 			JOptionPane.showMessageDialog(_frame, "SSID names cannot exceed 32 characters.");
 			return;
 		}
 		
 		try{
+			//if hostednetwork is not allowed, allow it
 			if(!settings.getMode()){
 				p = Runtime.getRuntime().exec("netsh wlan set hostednetwork mode=allow");
 				p.waitFor();
 			}
+			//if desired ssid name is not set one, set it
 			if(_ssidName.getText()!=settings.getName()){
 				p = Runtime.getRuntime().exec("netsh wlan set hostednetwork ssid=" + _ssidName.getText());
 				p.waitFor();
 			}
+			//if user key does not match set one, set it
 			if(_userKey.getText()!=settings.getKey()){
 				p = Runtime.getRuntime().exec("netsh wlan set hostednetwork key=" + _userKey.getText());
 				p.waitFor();
 			}
+			//start hosted network
 			p = Runtime.getRuntime().exec("netsh wlan start hostednetwork");
 			p.waitFor();
 			refresh(true);
@@ -272,7 +243,7 @@ public class WifiHotspot {
 	
 	public void stop(){
 		Process p;
-		
+		//stop hosted network
 		try{
 			p = Runtime.getRuntime().exec("netsh wlan stop hostednetwork");
 			p.waitFor();
@@ -283,7 +254,8 @@ public class WifiHotspot {
 	}
 	
 	public static void refresh(boolean pack){
-		
+		//parameter pack should only be true if running after frame has been displayed
+		//loads all settings via command line info
 		boolean mode = false;
 		int max = 0;
 		
@@ -344,7 +316,7 @@ public class WifiHotspot {
 		settings = new NetSettings(mode,_networkSettings[0],max,
 													_networkSettings[1],_networkSettings[2],
 													_networkSettings[3],_networkSettings[4]);
-		
+		//repacks frame if ran after frame is displayed
 		if(pack){
 			if(settings.getMode()){
 				_mode.setText("Allowed");;
