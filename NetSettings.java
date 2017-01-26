@@ -1,6 +1,5 @@
 public class NetSettings{
-	
-	//create private variables needed to create a Ballot Panel
+	//Network Settings data fields
 	private boolean _mode;
 	private String _ssidName;
 	private int _maxClients;
@@ -9,6 +8,7 @@ public class NetSettings{
 	private String _status;
 	private String _key;
 	
+	//Constructor
 	public NetSettings(boolean mode, String ssidName, int maxClients, String auth, String cipher, String status, String key){
 		_mode = mode;
 		_ssidName = ssidName;
